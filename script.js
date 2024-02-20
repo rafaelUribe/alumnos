@@ -40,6 +40,10 @@ const inputs = []
 
 const alumnos = []
 
+alumnos.push(new Alumno(1, "Carlos", "Martinez", 20, [], []))
+alumnos.push(new Alumno(2, "Alejandra", "Sanchez", 22, [], []))
+alumnos.push(new Alumno(3, "Alberto", "Rodriguez", 21, [], []))
+
 const grupos = []
 
 const materias = []
@@ -51,6 +55,7 @@ materias.push(new Materia(4, "Herbología"))
 materias.push(new Materia(5, "Historia de la Magia"))
 
 let selectedAlumno = null
+let selectedMateria = null
 
 const inputNombre = document.getElementById("inputNombre")
 const inputApellido = document.getElementById("inputApellido")
@@ -58,6 +63,7 @@ const inputEdad = document.getElementById("inputEdad")
 const btnLimpiarAlumno = document.getElementById("btnLimpiarAlumno")
 const btnGuardarAlumno = document.getElementById("btnGuardarAlumno")
 const selectAlumnos = document.getElementById("selectAlumnos")
+const calificacionTitle = document.getElementById("calificacionTitle")
 
 const asignId = (coleccion) => {
     if (coleccion.length === 0) {
@@ -109,13 +115,73 @@ const renderSelectAlumnos = (alumnos) => {
     document.getElementById("selectAlumnos").addEventListener("change", setAlumno)
 }
 
-const registrarMateria = ({target}) => {
-    const materia = target.value
+const registrarMateria = (e) => {
+    const materiaId = parseInt(e.target.value)
+    const materia = materias.filter(m => m.id === materiaId)[0]
     selectedAlumno.materiasInscritas.push(materia)
     renderEditAlumno(selectedAlumno)
 }
 
+const hideCalificacionSection = () => {
+    const calififacionSection = document.getElementById("calificacionSection")
+    calififacionSection.classList.add("display-none")
+}
+
+const updateCalificacion = (materiaId) => {
+
+}
+
+const setSelectedMateria = (e) => {
+    const materiaId = e.target.value
+    selectedMateria = selectedAlumno.materiasInscritas.find(m => m.id == materiaId)
+    console.log(selectedMateria)
+
+    renderRegistrarCalificacion()
+}
+
+const renderRegistrarCalificacion = () => {
+    const calificacionSection = document.getElementById("calificacionSection")
+    
+    const h2 = document.createElement("h2");
+    h2.id = "calificacionTitle";
+    h2.classList.add("mt-2", "text-center", "w-100");
+    h2.innerHTML = `Calificación de ${selectedAlumno.nombre} ${selectedAlumno.apellido} en la materia ${selectedMateria.nombre}`
+    
+    const divCol1 = document.createElement("div");
+    divCol1.classList.add("col-12", "row");
+    
+    const divCol1_1 = document.createElement("div");
+    divCol1_1.classList.add("col-4");
+    const btnUp = document.createElement("button");
+    btnUp.id = "calificacionUP";
+    btnUp.classList.add("btn", "btn-secondary");
+    divCol1_1.appendChild(btnUp);
+    
+    const divCol1_2 = document.createElement("div");
+    divCol1_2.classList.add("col-4");
+    const pCalificacion = document.createElement("p");
+    pCalificacion.id = "calificacionElement";
+    divCol1_2.appendChild(pCalificacion);
+    
+    const divCol1_3 = document.createElement("div");
+    divCol1_3.classList.add("col-4");
+    const btnDown = document.createElement("button");
+    btnDown.id = "calificacionDOWN";
+    btnDown.classList.add("btn", "btn-secondary");
+    divCol1_3.appendChild(btnDown);
+    
+    divCol1.appendChild(divCol1_1);
+    divCol1.appendChild(divCol1_2);
+    divCol1.appendChild(divCol1_3);
+    
+    calificacionSection.appendChild(h2);
+    calificacionSection.appendChild(divCol1);
+    
+
+}
+
 const renderEditAlumno = (alumno) => {
+    hideCalificacionSection()
 
     const materiasInscritasContainer = document.getElementById("inscritasContainer")
     const materiasAElegirContainer = document.getElementById("aElegirContainer")
@@ -123,9 +189,11 @@ const renderEditAlumno = (alumno) => {
     materiasInscritasContainer.innerHTML = ""
     materiasAElegirContainer.innerHTML = ""
 
-    const inscritasH3 = document.createElement("h3")
-    inscritasH3.innerHTML = "Selecciona para asignar calificación"
-    materiasInscritasContainer.appendChild(inscritasH3)
+    if(alumno.materiasInscritas.length > 0){
+        const inscritasH3 = document.createElement("h3")
+        inscritasH3.innerHTML = "Selecciona para asignar calificación"
+        materiasInscritasContainer.appendChild(inscritasH3)
+    }
 
     const elegirH3 = document.createElement("H3")
     elegirH3.innerHTML = "Selecciona materia a registrar"
@@ -150,25 +218,23 @@ const renderEditAlumno = (alumno) => {
         materiaElement.id = `materia${m.id}`
         materiaElement.classList.add("btn","btn-primary", "mt-2" ,"w-100")
         materiaElement.innerHTML = m.nombre
-        materiaElement.value = m
+        materiaElement.value = m.id
         materiasAElegirContainer.appendChild(materiaElement)
         materiaElement.addEventListener("click", registrarMateria)
     })
 
     
     materiasAlumno.forEach( m => {
-        const materiaElement = document.createElement("div")
+        const materiaElement = document.createElement("button")
         materiaElement.id = `materia${m.id}`
-        materiaElement.classList.add("bg-white", "p-2", "mt-2")
+        materiaElement.classList.add("btn","btn-secondary", "mt-2" ,"w-100")
         materiaElement.innerHTML = m.nombre
+        materiaElement.value = m.id
         materiasInscritasContainer.appendChild(materiaElement)
+        materiaElement.addEventListener("click", setSelectedMateria)
     })
-
-
-
     
 }
-
 
 const saveAlumno = () => {
     const id = asignId(alumnos)
@@ -183,3 +249,7 @@ const saveAlumno = () => {
 
 btnLimpiarAlumno.addEventListener("click",cleanInputs)
 btnGuardarAlumno.addEventListener("click",saveAlumno)
+
+if(alumnos.length > 0){
+    renderSelectAlumnos(alumnos)
+}
