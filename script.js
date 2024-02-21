@@ -1,15 +1,12 @@
 class Alumno {
-    constructor(id, nombre, apellido, edad, materiasInscritas, calificaciones) {
+    constructor(id, nombre, apellido, edad, materiasInscritas, calificaciones, grupo) {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
         this.edad = edad;
         this.materiasInscritas = materiasInscritas;
         this.calificaciones = calificaciones;
-    }
-
-    asignarCalificacion(){
-
+        this.grupo = grupo;
     }
 }
 
@@ -21,10 +18,9 @@ class Materia {
 }
 
 class Calificacion {
-    constructor(id, materia, calificacion){
-        this.id = id;
+    constructor(materia, score){
         this.materia = materia;
-        this.calificacion = calificacion;
+        this.score = score;
     }
 }
 
@@ -32,7 +28,6 @@ class Grupo {
     constructor(id, nombre, alumnos){
         this.id = id;
         this.nombre = nombre;
-        this.alumnos = alumnos;
     }
 }
 
@@ -40,11 +35,16 @@ const inputs = []
 
 const alumnos = []
 
-alumnos.push(new Alumno(1, "Carlos", "Martinez", 20, [], []))
-alumnos.push(new Alumno(2, "Alejandra", "Sanchez", 22, [], []))
-alumnos.push(new Alumno(3, "Alberto", "Rodriguez", 21, [], []))
+alumnos.push(new Alumno(1, "Carlos", "Martinez", 20, [], [], null))
+alumnos.push(new Alumno(2, "Alejandra", "Sanchez", 22, [], [], null))
+alumnos.push(new Alumno(3, "Alberto", "Rodriguez", 21, [], [], null))
 
 const grupos = []
+
+grupos.push(new Grupo(1, "3A"))
+grupos.push(new Grupo(1, "3B"))
+grupos.push(new Grupo(1, "3C"))
+
 
 const materias = []
 
@@ -89,10 +89,22 @@ const cleanInputs = () => {
     inputEdad.value = 18
 }
 
+const renderAlumnoJson = () => {
+    const pre = document.getElementById("preEl")
+    pre.innerHTML = JSON.stringify(selectedAlumno)
+}
+
 const setAlumno = (event) => {
     const id = parseInt(event.target.value)
     selectedAlumno = alumnos.filter(a => a.id === id)[0]
     renderEditAlumno(selectedAlumno)
+    renderAlumnoJson()
+}
+
+const setAlumnoGroup = (e) => {
+    const id = e.target.value
+    const group = grupos.find(g => g.id == id)
+
 }
 
 const renderSelectAlumnos = (alumnos) => {
@@ -113,75 +125,137 @@ const renderSelectAlumnos = (alumnos) => {
 
     contenedor.appendChild(selectAlumnos);
     document.getElementById("selectAlumnos").addEventListener("change", setAlumno)
+
+}
+
+const setGroup = (e) => {
+    selectedAlumno.grupo = grupos.find(g => g.id == e.target.value)
+    renderAlumnoJson()
+}
+
+const renderGroupSelector = () => {
+    const contenedorGrupos = document.getElementById("groupContainer")
+
+    contenedorGrupos.innerHTML = ""
+
+    const grouph2 = document.createElement("h2")
+    grouph2.textContent = "Selecciona grupo"
+
+    contenedorGrupos.appendChild(grouph2)
+
+    grupos.forEach(g => {
+        const groupElement = document.createElement("button")
+        groupElement.value = g.id
+        groupElement.textContent = g.nombre
+        groupElement.classList.add("btn", "btn-primary", "m-4")
+        contenedorGrupos.appendChild(groupElement)
+        groupElement.addEventListener("click", setGroup)
+    })  
+
+    renderAlumnoJson()
 }
 
 const registrarMateria = (e) => {
     const materiaId = parseInt(e.target.value)
-    const materia = materias.filter(m => m.id === materiaId)[0]
+    const materia = materias.find(m => m.id == materiaId)
+    console.log(materia)
+
     selectedAlumno.materiasInscritas.push(materia)
+
+    const calificacionMateria = new Calificacion(materia, null)
+    console.log(calificacionMateria)
+    selectedAlumno.calificaciones.push(calificacionMateria)
+
     renderEditAlumno(selectedAlumno)
-}
-
-const hideCalificacionSection = () => {
-    const calififacionSection = document.getElementById("calificacionSection")
-    calififacionSection.classList.add("display-none")
-}
-
-const updateCalificacion = (materiaId) => {
-
+    renderAlumnoJson()
 }
 
 const setSelectedMateria = (e) => {
     const materiaId = e.target.value
     selectedMateria = selectedAlumno.materiasInscritas.find(m => m.id == materiaId)
-    console.log(selectedMateria)
 
-    renderRegistrarCalificacion()
+    renderCalificacionSection()
+    renderAlumnoJson()
 }
 
-const renderRegistrarCalificacion = () => {
+const sumarCalificacion = (e) => {
+    let calificacion = selectedAlumno.calificaciones.find(c => c.materia.id == selectedMateria.id);
+    
+    if (calificacion && calificacion.score < 10) {
+        calificacion.score++;
+    } else {
+        calificacion = new Calificacion(selectedMateria, 1);
+    }
+
+    renderCalificacionSection();
+};
+
+const restarCalificacion = (e) => {
+    let calificacion = selectedAlumno.calificaciones.find(c => c.materia.id == selectedMateria.id);
+    
+    if (calificacion && calificacion.score > 0) {
+        calificacion.score--;
+    } else {
+        calificacion = new Calificacion(selectedMateria, 0);
+    }
+
+    renderCalificacionSection();
+};
+
+
+const renderCalificacionSection = () => {
+
     const calificacionSection = document.getElementById("calificacionSection")
+
+    calificacionSection.innerHTML = ""
     
     const h2 = document.createElement("h2");
     h2.id = "calificacionTitle";
     h2.classList.add("mt-2", "text-center", "w-100");
+    calificacionSection.appendChild(h2);
     h2.innerHTML = `Calificación de ${selectedAlumno.nombre} ${selectedAlumno.apellido} en la materia ${selectedMateria.nombre}`
     
     const divCol1 = document.createElement("div");
-    divCol1.classList.add("col-12", "row");
-    
+    divCol1.classList.add("col-6", "row", "justify-center", "mt-4");
+
     const divCol1_1 = document.createElement("div");
-    divCol1_1.classList.add("col-4");
-    const btnUp = document.createElement("button");
-    btnUp.id = "calificacionUP";
-    btnUp.classList.add("btn", "btn-secondary");
-    divCol1_1.appendChild(btnUp);
+    divCol1_1.classList.add("col-2");
+    const btnDown = document.createElement("button");
+    btnDown.id = "calificacionDOWN";
+    btnDown.classList.add("btn", "btn-secondary", "text-center");
+    divCol1_1.appendChild(btnDown);
+    btnDown.innerHTML = "-"
+    btnDown.addEventListener("click", restarCalificacion)
     
     const divCol1_2 = document.createElement("div");
-    divCol1_2.classList.add("col-4");
+    divCol1_2.classList.add("col-2");
     const pCalificacion = document.createElement("p");
     pCalificacion.id = "calificacionElement";
     divCol1_2.appendChild(pCalificacion);
+    pCalificacion.innerHTML = selectedAlumno.calificaciones.find(c => c.materia.id == selectedMateria.id).score;
     
     const divCol1_3 = document.createElement("div");
-    divCol1_3.classList.add("col-4");
-    const btnDown = document.createElement("button");
-    btnDown.id = "calificacionDOWN";
-    btnDown.classList.add("btn", "btn-secondary");
-    divCol1_3.appendChild(btnDown);
+    divCol1_3.classList.add("col-2");
+    const btnUp = document.createElement("button");
+    btnUp.id = "calificacionUP";
+    btnUp.classList.add("btn", "btn-secondary", "text-center");
+    divCol1_3.appendChild(btnUp);
+    btnUp.innerHTML = "+"
+    btnUp.addEventListener("click", sumarCalificacion)
     
     divCol1.appendChild(divCol1_1);
     divCol1.appendChild(divCol1_2);
     divCol1.appendChild(divCol1_3);
     
-    calificacionSection.appendChild(h2);
     calificacionSection.appendChild(divCol1);
     
-
+    renderAlumnoJson()
 }
 
 const renderEditAlumno = (alumno) => {
-    hideCalificacionSection()
+
+    const calificacionSection = document.getElementById("calificacionSection")
+    calificacionSection.innerHTML = ""
 
     const materiasInscritasContainer = document.getElementById("inscritasContainer")
     const materiasAElegirContainer = document.getElementById("aElegirContainer")
@@ -233,6 +307,8 @@ const renderEditAlumno = (alumno) => {
         materiasInscritasContainer.appendChild(materiaElement)
         materiaElement.addEventListener("click", setSelectedMateria)
     })
+
+    renderGroupSelector()
     
 }
 
@@ -242,7 +318,7 @@ const saveAlumno = () => {
     const apellido = inputApellido.value
     const edad = inputEdad.value
     cleanInputs()
-    const newAlumno = new Alumno(id, nombre, apellido, edad, [], [])
+    const newAlumno = new Alumno(id, nombre, apellido, edad, [], [], null)
     alumnos.push(newAlumno)
     renderSelectAlumnos(alumnos)
 }
